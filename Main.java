@@ -1,236 +1,99 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
 
 public class Main extends JFrame {
-    private JTextField inputField1, inputField2;
-    private JTextArea resultArea;
-    private JButton primeButton, oddEvenButton, lcmButton, hcfButton, addButton, subtractButton, multiplyButton, divideButton;
-    private JButton decimalButton, factorialButton, squareButton, sqrtButton, quizButton, clearButton;
+    private JTextArea inputTextArea, outputTextArea;
+    private JButton summarizeButton;
 
     public Main() {
-        setTitle("Math Game for Kids");
-        setSize(600, 500);
+        setTitle("Text Summarizer");
+        setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Input fields
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(2, 2));
-        inputPanel.add(new JLabel("Number 1:"));
-        inputField1 = new JTextField();
-        inputPanel.add(inputField1);
-        inputPanel.add(new JLabel("Number 2:"));
-        inputField2 = new JTextField();
-        inputPanel.add(inputField2);
+        // Input text area
+        inputTextArea = new JTextArea();
+        inputTextArea.setLineWrap(true);
+        inputTextArea.setWrapStyleWord(true);
+        JScrollPane inputScrollPane = new JScrollPane(inputTextArea);
 
-        // Buttons
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(6, 2));
-        primeButton = new JButton("Check Prime");
-        oddEvenButton = new JButton("Check Odd/Even");
-        lcmButton = new JButton("Calculate LCM");
-        hcfButton = new JButton("Calculate HCF");
-        addButton = new JButton("Add");
-        subtractButton = new JButton("Subtract");
-        multiplyButton = new JButton("Multiply");
-        divideButton = new JButton("Divide");
-        decimalButton = new JButton("Check Decimal");
-        factorialButton = new JButton("Calculate Factorial");
-        squareButton = new JButton("Calculate Square");
-        sqrtButton = new JButton("Calculate Square Root");
-        quizButton = new JButton("Random Math Quiz");
-        clearButton = new JButton("Clear");
+        // Output text area
+        outputTextArea = new JTextArea();
+        outputTextArea.setLineWrap(true);
+        outputTextArea.setWrapStyleWord(true);
+        outputTextArea.setEditable(false);
+        JScrollPane outputScrollPane = new JScrollPane(outputTextArea);
 
-        buttonPanel.add(primeButton);
-        buttonPanel.add(oddEvenButton);
-        buttonPanel.add(lcmButton);
-        buttonPanel.add(hcfButton);
-        buttonPanel.add(addButton);
-        buttonPanel.add(subtractButton);
-        buttonPanel.add(multiplyButton);
-        buttonPanel.add(divideButton);
-        buttonPanel.add(decimalButton);
-        buttonPanel.add(factorialButton);
-        buttonPanel.add(squareButton);
-        buttonPanel.add(sqrtButton);
-        buttonPanel.add(quizButton);
-        buttonPanel.add(clearButton);
-
-        // Result area
-        resultArea = new JTextArea();
-        resultArea.setEditable(false);
+        // Summarize button
+        summarizeButton = new JButton("Summarize");
+        summarizeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String inputText = inputTextArea.getText();
+                String summary = summarizeText(inputText);
+                outputTextArea.setText(summary);
+            }
+        });
 
         // Add components to the frame
-        add(inputPanel, BorderLayout.NORTH);
-        add(buttonPanel, BorderLayout.CENTER);
-        add(new JScrollPane(resultArea), BorderLayout.SOUTH);
-
-        // Add action listeners
-        primeButton.addActionListener(e -> checkPrime());
-        oddEvenButton.addActionListener(e -> checkOddEven());
-        lcmButton.addActionListener(e -> calculateLCM());
-        hcfButton.addActionListener(e -> calculateHCF());
-        addButton.addActionListener(e -> performOperation("+"));
-        subtractButton.addActionListener(e -> performOperation("-"));
-        multiplyButton.addActionListener(e -> performOperation("*"));
-        divideButton.addActionListener(e -> performOperation("/"));
-        decimalButton.addActionListener(e -> checkDecimal());
-        factorialButton.addActionListener(e -> calculateFactorial());
-        squareButton.addActionListener(e -> calculateSquare());
-        sqrtButton.addActionListener(e -> calculateSquareRoot());
-        quizButton.addActionListener(e -> generateMathQuiz());
-        clearButton.addActionListener(e -> clearFields());
+        add(new JLabel("Input Text:"), BorderLayout.NORTH);
+        add(inputScrollPane, BorderLayout.CENTER);
+        add(summarizeButton, BorderLayout.SOUTH);
+        add(new JLabel("Summary:"), BorderLayout.WEST);
+        add(outputScrollPane, BorderLayout.EAST);
     }
 
-    private void checkPrime() {
-        try {
-            int num = Integer.parseInt(inputField1.getText());
-            boolean isPrime = num > 1;
-            for (int i = 2; i <= Math.sqrt(num); i++) {
-                if (num % i == 0) {
-                    isPrime = false;
-                    break;
-                }
+    // Method to summarize text
+    private String summarizeText(String text) {
+        if (text.isEmpty()) {
+            return "Please enter some text to summarize.";
+        }
+
+        // Split text into sentences
+        String[] sentences = text.split("[.!?]\\s*");
+
+        // Split text into words and calculate word frequencies
+        String[] words = text.toLowerCase().split("\\s+");
+        Map<String, Integer> wordFrequencies = new HashMap<>();
+        for (String word : words) {
+            wordFrequencies.put(word, wordFrequencies.getOrDefault(word, 0) + 1);
+        }
+
+        // Score sentences based on word frequencies
+        Map<String, Integer> sentenceScores = new HashMap<>();
+        for (String sentence : sentences) {
+            String[] sentenceWords = sentence.toLowerCase().split("\\s+");
+            int score = 0;
+            for (String word : sentenceWords) {
+                score += wordFrequencies.getOrDefault(word, 0);
             }
-            resultArea.setText(num + (isPrime ? " is a prime number." : " is not a prime number."));
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
+            sentenceScores.put(sentence, score);
         }
-    }
 
-    private void checkOddEven() {
-        try {
-            int num = Integer.parseInt(inputField1.getText());
-            resultArea.setText(num + " is " + (num % 2 == 0 ? "even." : "odd."));
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
+        // Sort sentences by score in descending order
+        List<Map.Entry<String, Integer>> sortedSentences = new ArrayList<>(sentenceScores.entrySet());
+        sortedSentences.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        // Select top 3 sentences for the summary
+        StringBuilder summary = new StringBuilder();
+        int summaryLength = Math.min(3, sortedSentences.size());
+        for (int i = 0; i < summaryLength; i++) {
+            summary.append(sortedSentences.get(i).getKey()).append(". ");
         }
-    }
 
-    private void calculateLCM() {
-        try {
-            int num1 = Integer.parseInt(inputField1.getText());
-            int num2 = Integer.parseInt(inputField2.getText());
-            int lcm = Math.max(num1, num2);
-            while (lcm % num1 != 0 || lcm % num2 != 0) {
-                lcm++;
-            }
-            resultArea.setText("LCM of " + num1 + " and " + num2 + " is " + lcm);
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter valid numbers.");
-        }
-    }
-
-    private void calculateHCF() {
-        try {
-            int num1 = Integer.parseInt(inputField1.getText());
-            int num2 = Integer.parseInt(inputField2.getText());
-            int hcf = 1;
-            for (int i = 1; i <= num1 && i <= num2; i++) {
-                if (num1 % i == 0 && num2 % i == 0) {
-                    hcf = i;
-                }
-            }
-            resultArea.setText("HCF of " + num1 + " and " + num2 + " is " + hcf);
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter valid numbers.");
-        }
-    }
-
-    private void performOperation(String operator) {
-        try {
-            double num1 = Double.parseDouble(inputField1.getText());
-            double num2 = Double.parseDouble(inputField2.getText());
-            double result = 0;
-            String workings = num1 + " " + operator + " " + num2 + " = ";
-            switch (operator) {
-                case "+":
-                    result = num1 + num2;
-                    break;
-                case "-":
-                    result = num1 - num2;
-                    break;
-                case "*":
-                    result = num1 * num2;
-                    break;
-                case "/":
-                    if (num2 == 0) {
-                        resultArea.setText("Cannot divide by zero.");
-                        return;
-                    }
-                    result = num1 / num2;
-                    break;
-            }
-            resultArea.setText(workings + result);
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter valid numbers.");
-        }
-    }
-
-    private void checkDecimal() {
-        try {
-            double num = Double.parseDouble(inputField1.getText());
-            resultArea.setText(num + (num % 1 == 0 ? " is not a decimal." : " is a decimal."));
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
-        }
-    }
-
-    private void calculateFactorial() {
-        try {
-            int num = Integer.parseInt(inputField1.getText());
-            if (num < 0) {
-                resultArea.setText("Factorial is not defined for negative numbers.");
-                return;
-            }
-            long factorial = 1;
-            for (int i = 1; i <= num; i++) {
-                factorial *= i;
-            }
-            resultArea.setText("Factorial of " + num + " is " + factorial);
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
-        }
-    }
-
-    private void calculateSquare() {
-        try {
-            double num = Double.parseDouble(inputField1.getText());
-            resultArea.setText("Square of " + num + " is " + (num * num));
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
-        }
-    }
-
-    private void calculateSquareRoot() {
-        try {
-            double num = Double.parseDouble(inputField1.getText());
-            if (num < 0) {
-                resultArea.setText("Square root is not defined for negative numbers.");
-                return;
-            }
-            resultArea.setText("Square root of " + num + " is " + Math.sqrt(num));
-        } catch (NumberFormatException e) {
-            resultArea.setText("Invalid input. Please enter a valid number.");
-        }
-    }
-
-    private void generateMathQuiz() {
-        int num1 = (int) (Math.random() * 100);
-        int num2 = (int) (Math.random() * 100);
-        String[] operators = {"+", "-", "*", "/"};
-        String operator = operators[(int) (Math.random() * operators.length)];
-        String question = "What is " + num1 + " " + operator + " " + num2 + "?";
-        resultArea.setText(question);
-    }
-
-    private void clearFields() {
-        inputField1.setText("");
-        inputField2.setText("");
-        resultArea.setText("");
+        return summary.toString();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Main().setVisible(true));
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new Main().setVisible(true);
+            }
+        });
     }
 }
